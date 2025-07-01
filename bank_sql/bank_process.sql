@@ -457,10 +457,17 @@ ALL(SELECT transaction_date FROM `index`)
 
 -- 63
 
-SELECT A.
-FROM 
+
 
 -- 64
+
+INSERT INTO abolished_accounts
+SELECT *
+FROM accounts
+WHERE account_id = '2761055';
+DELETE FROM accounts
+WHERE account_id = '2761055';
+
 -- 65
 
 SELECT i.account_id, i.transaction_date, tr.transaction_reason_name, i.deposit_amount, i.withdrawal_amount
@@ -509,35 +516,71 @@ ON tr.transaction_reason_id = i.transaction_reason_id
 
 -- 70
 
+SELECT DISTINCT i.transaction_reason_id, tr.transaction_reason_name
+FROM `index` AS i
+LEFT JOIN transaction_reasons AS tr
+ON tr.transaction_reason_id = i.transaction_reason_id
+UNION
+SELECT DISTINCT i.transaction_reason_id, tr.transaction_reason_name
+FROM `index` AS i
+RIGHT JOIN transaction_reasons
+ON tr.transaction_reason_id = i.transaction_reason_id
+
+SELECT DISTINCT COALESCE(i.transaction_reason_id, tr.transaction_reason_id), tr.transaction_reason_name
+FROM `index` AS i 
+FULL JOIN transaction_reasons AS tr
+ON tr.transaction_reason_id = i.transaction_reason_id;
 
 
 -- 71
+
+SELECT a.account_id, a.name, a.balance, i.transaction_date, tr.transaction_reason_id, i.deposit_amount, i.withdrawal_amount
+FROM accounts AS a
+JOIN `index` AS i
+ON a.account_id = i.account_id
+JOIN transaction_reasons AS tr
+ON tr.transaction_reason_id = i.transaction_reason_id
+WHERE a.account_id = '0887132'
+ORDER BY i.transaction_id;
+
+
 -- 72
+
+SELECT a.account_id, a.name, a.balance, i.transaction_date, i.transaction_reason_id, i.deposit_amount, i.withdrawal_amount
+FROM accounts AS a
+JOIN `index` AS i
+ON i.account_id = a.account_id
+WHERE a.balance >= 5000000
+AND(i.deposit_amount >= 1000000 OR i.withdrawal_amount >= 1000000)
+AND i.transaction_date > 2023-12-31;
+
 -- 73
+
+SELECT a.account_id, a.name, a.balance, i.transaction_date, i.transaction_reason_id, i.deposit_amount, i.withdrawal_amount
+FROM accounts AS a
+JOIN `index` AS i
+ON i.account_id = a.account_id
+WHERE a.balance >= 5000000
+AND(i.deposit_amount >= 1000000 OR i.withdrawal_amount >= 1000000)
+AND i.transaction_date > 2023-12-31;
+
 -- 74
+
+SELECT a.account_id, i.回数, a.account_name
+FROM accounts AS a
+JOIN (SELECT account_id, COUNT(*) AS 回数
+        FROM `index` AS
+        GROUP BY account_id, transaction_date
+        HAVING COUNT(*) >= 3)AS i
+ON a.account_id = i.accouunt_id;
+
+
+
 -- 75
--- 76
--- 77
--- 78
--- 79
--- 80
--- 81
--- 82
--- 83
--- 84
--- 85
--- 86
--- 87
--- 88
--- 89
--- 90
--- 91
--- 92
--- 93
--- 94
--- 95
--- 96
--- 97
--- 98
--- 99
--- 100
+
+SELECT DISTINCT a1.name, a1.account_id, a1.`type`, a1.update_date
+FROM accounts AS a1
+JOIN accounts AS a2
+ON a1.name = a2.name
+WHERE a1.account_id <> a2.account_id
+ORDER BY a1.name, a1.account_id

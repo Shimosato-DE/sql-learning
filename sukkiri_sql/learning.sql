@@ -102,7 +102,7 @@ WHERE update_date LIKE "2024-01%";
 
 SELECT *
 FROM accounts
-WHERE
+WHERE `type` IN(1, 2)
 
 --19
 
@@ -128,7 +128,7 @@ AND update_date IS NOT NULL;
 
 SELECT *
 FROM accounts
-WHERE account_id LIKE '2%'
+WHERE account_id LIKE '2______'
 OR
 (name LIKE 'エ___　%'
 AND name LIKE '%コ')
@@ -410,24 +410,27 @@ GROUP BY first_chara;
 -- 59
 
 UPDATE accounts
-SET balance = (
-    balance +
-    (SELECT deposit_amount
+SET balance = balance + (
+    SELECT COALESCE(SUM(deposit_amount), 0) - 
+    COALESCE(SUM(withdrawal_amount), 0)
     FROM `index`
     WHERE account_id = '0351333'
-    AND transaction_date = '2024-01-11'
-    LIMIT 1) -
-    (SELECT withdrawal_amount
-    FROM `index`
-    WHERE account_id = '0351333'
-    AND transaction_date = '2024-01-11'
-    LIMIT 1)
-)
-WHERE
-    account_id = '0351333';
+    AND transaction_date = '2024-01-11'), 
+
+    update_date = '2024-01-11'
+
+    WHERE account_id = '0351333';
+
  
 
 -- 60
+SELECT balance, (SELECT SUM())
+FROM index
+WHERE account_id = '1115600'
+AND '2023-12-28'
+
+FROM accounts
+WHERE account_id = '1115600'
 
 
 

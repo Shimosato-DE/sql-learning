@@ -1,3 +1,4 @@
+-- Active: 1751339280099@@127.0.0.1@3306@store
 -- 1
 
 SELECT 商品コード, 商品名, 単価, 商品区分, 関連商品コード
@@ -357,27 +358,191 @@ ORDER BY 数量合計 DESC,
 商品コード OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
 
 -- 51
+
+SELECT 商品コード, SUM(数量) AS 数量合計
+FROM  注文
+GROUP BY 商品コード
+ORDER BY 商品コード
+HAVING SUM(数量) < 5;
+
 -- 52
+
+SELECT COUNT(クーポン割引料) AS 割引件数, SUM(クーポン割引料) AS 割引額合計
+FROM 注文
+
 -- 53
+
+SELECT SUBSTRING(注文番号, 1, 6) AS 年月, COUNT(*) AS 注文件数 
+FROM 注文
+WHERE 注文枝番 = 1
+GROUP BY SUBSTRING(注文番号, 1, 6)
+ORDER BY SUBSTRING(注文番号, 1, 6) DESC
+
 -- 54
+
+SELECT 商品コード
+FROM 注文
+WHERE 商品コード LIKE 'Z%'
+GROUP BY 商品コード
+HAVING SUM(数量) >= 100;
+
+
 -- 55
+
+SELECT 商品コード, 商品名, 単価, (
+    SELECT SUM(数量)
+    FROM 注文
+    WHERE 商品コード = 'S0604')
+FROM 商品
+WHERE 商品コード = 'S0604'
+
 -- 56
+
+UPDATE 注文
+SET 商品コード = (
+    SELECT 商品コード
+    FROM 商品
+    WHERE 商品区分 = '2'
+    AND 商品名 LIKE '%ブーツ%'
+    AND 商品名 LIKE '%雨%'
+    AND 商品名 LIKE '%安心%'
+)
+WHERE 注文日 = '2024-03-15'
+AND 注文番号 = '202403150014'
+AND 注文枝番 = '1';
+
 -- 57
+
+SELECT 注文日, 商品コード
+FROM 注文
+WHERE 商品コード IN(
+    SELECT 商品コード
+    FROM 商品
+    WHERE 商品名 LIKE '%あったか%'
+)
+ORDER BY 注文日 ASC;
+
+
 -- 58
--- 59
+
+SELECT 商品コード, SUM(数量) AS 数量
+FROM 注文
+GROUP BY 商品コード
+HAVING SUM(数量) > ALL(
+    SELECT AVG(数量)
+    FROM 注文
+    GROUP BY 商品コード
+    )
+
+
+
 -- 60
+
+INSERT INTO 注文
+SELECT 注文日, 注文番号, MAX(注文枝番) + 1, 'S1003', 1, NULL
+FROM 注文
+WHERE 注文日 = '2024-03-21'
+AND 注文番号 = '202403210080'
+GROUP BY 注文日, 注文番号
+
+INSERT INTO 注文
+SELECT 注文日, 注文番号, MAX(注文枝番) + 1, 'A0052', 2, 500
+FROM 注文
+WHERE 注文日 = '2024-03-22'
+AND 注文番号 = '202403220901'
+GROUP BY 注文日, 注文番号
+
 -- 61
+
+SELECT t.注文番号, t.注文枝番, t.商品コード, s.商品名, t.数量
+FROM 注文 AS t
+JOIN 商品 AS s
+ON s.商品コード = t.商品コード
+WHERE t.注文番号 = '202401130115'
+ORDER BY 注文番号, 注文枝番
+
 -- 62
+
+SELECT t.注文日, t.注文番号, t.注文枝番, t.数量, (h.単価 * t.数量) AS 注文金額
+FROM 廃盤商品 AS h
+JOIN 注文 AS t
+ON t.商品コード = h.商品コード
+WHERE h.商品コード = 'A0009'
+AND t.注文日 < h.廃盤日
+
 -- 63
+
+SELECT s.商品コード, s.商品名, s.単価, t.注文日, t.注文番号, t.数量
+FROM 商品 AS s
+JOIN 注文 AS t
+ON t.商品コード = s.商品コード
+WHERE s.商品コード = 'S0604'
+ORDER BY t.注文番号
+
 -- 64
+
+SELECT t.商品コード, s.商品名
+FROM 注文 AS t
+JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE t.注文日 >= '2022-08-01'
+AND t.注文日 < '2022-09-01'
+
 -- 65
+
+SELECT t.商品コード, COALESCE(s.商品名, '廃盤') AS 商品名
+FROM 注文 AS t
+LEFT JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE t.注文日 >= '2022-08-01'
+AND t.注文日 < '2022-09-01'
+
 -- 66
+
+SELECT t.注文日, CONCAT(t.商品コード, ':', s.商品名) AS 商品, COALESCE(t.数量, 0) AS 数
+FROM 注文 AS t
+RIGHT JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE s.商品区分 = '3';
+
+
 -- 67
+
+SELECT t.注文日, CONCAT(t.商品コード, ':', s.商品名) AS 商品, COALESCE(t.数量, 0) AS 数
+FROM 注文 AS t
+RIGHT JOIN (SELECT 商品コード
+ON t.商品コード = s.商品コード
+UNION
+SELECT 商品コード, ('廃盤済み') AS 廃盤商品, 商品区分()
+FROM 
+WHERE s.商品区分 = '3';
+
 -- 68
+
+SELECT T.注文日, T.注文番号, T.注文枝番, T. 商品コード, COALESCE (S. 商品名,H.商品名) AS 商品名,COALESCE(S.単価,H.単価)AS単価,T.数量 AS数量,COALESCE(S.単価,H.単価)*T.数量 COALESCE (T. クーポン割引料, 0) AS 注文金額
+FROM 注文 AS T 
+LEFT JOIN 商品 AS S
+ON T. 商品コード = S. 商品コード 
+LEFT JOIN 廃番商品 AS H
+ON T. 商品コード = H. 商品コード 
+WHERE T. 注文番号 = '202304030010'
+
 -- 69
+
+SELECT S.商品コード, S.商品名,S.単価,COALESCE(T.数量,0) AS売上数量, S.単価 * COALESCE(T.数量, 0) AS 総売上金額 
+FROM 商品 ASS 
+LEFT JOIN (SELECT 商品コード, SUM(数量) AS 数量 
+FROM 注文 
+WHERE 商品コード LIKE 'B%' 
+GROUP BY 商品コード) AST
+ON S.商品コード = T. 商品コード 
+WHERE S.商品コード LIKE 'B%' 
+ORDER BY S.商品コード品コード 
+WHERE S.商品区分 = '3'
+
 -- 70
--- 71
--- 72
--- 73
--- 74
--- 75
+
+SELECT s1.商品コード, s1.商品名, s2.商品コード AS 関連商品コード, s2.商品名 AS 関連商品名
+FROM 商品 AS s1
+JOIN 商品 AS s2
+ON s1.商品コード = s2.商品コード

@@ -26,3 +26,11 @@ CREATE TABLE IF NOT EXISTS `経験イベント` (
     `ルート番号` INTEGER
 );
 
+--コード
+CREATE TABLE IF NOT EXISTS `コード` (
+    `コード種別` INTEGER NOT NULL,
+    `コード値` CHAR(2) NOT NULL,
+    `コード名称` VARCHAR(100)
+
+    PRIMARY KEY(`コード種別`, `コード値`)
+) 

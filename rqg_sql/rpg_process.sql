@@ -1,3 +1,4 @@
+-- Active: 1751504975965@@127.0.0.1@3306@RPG
 -- 1
 
 SELECT id, 名称, 職業コード, `HP`, `MP`, 状態コード
@@ -429,12 +430,119 @@ WHERE 前提イベント番号 = ANY(
 )
 
 -- 61
+
+ UPDATE 経験イベント SET クリア区分 = '1', クリア結果 = 'B', ルート番号 = (
+    SELECT MAX(ルート番号) + 1
+    FROM イベント)
+    WHERE イベント番号 = 9;
+
+INSERT INTO 経験イベント
+VALUES((SELECT イベント番号 FROM イベント WHERE 前提イベント番号 = 9),'0', NULL, NULL)
+
 -- 62
+
+SELECT k.ルート番号, k.イベント番号, e.イベント名称, k.クリア結果
+FROM 経験イベント AS k
+JOIN イベント AS e
+ON e.イベント番号 = k.イベント番号
+WHERE クリア区分 = '1'
+ORDER BY ルート番号
+
 -- 63
+
+SELECT e.イベント番号, e.イベント名称, k.クリア区分
+FROM イベント AS e
+JOIN 経験イベント AS k
+ON k.イベント番号 = e.イベント番号
+WHERE e.タイプ = '1'
+
 -- 64
+
+SELECT e.イベント番号, e.イベント名称, COALESCE(k.クリア区分, '未クリア')
+FROM イベント AS e
+LEFT JOIN 経験イベント AS k
+ON k.イベント番号 = e.イベント番号
+WHERE e.タイプ = '1'
+
 -- 65
+
+SELECT p.id, p.名称, s.コード名称 AS 職業, j.コード名称 AS 状態
+FROM パーティ AS p
+JOIN (
+    SELECT コード値, コード名称
+    FROM コード
+    WHERE コード種別 = 1
+) AS s
+ON s.コード値 = p.職業コード
+JOIN (
+    SELECT コード値, コード名称
+    FROM コード
+    WHERE コード種別 = 2
+) AS j
+ON j.コード値 = p.状態コード
+
 -- 66
+
+SELECT p.id, COALESCE(p.名称, '仲間になっていない'), s.コード名称 AS 名称
+FROM パーティ AS p
+RIGHT JOIN (
+    SELECT コード値, コード名称
+    FROM コード
+    WHERE コード種別 = 1
+) AS s
+ON s.コード値 = p.職業コード 
+
 -- 67
+
+SELECT k.イベント番号, k.クリア区分, CONCAT(k.クリア結果, ':', c.コード名称) AS クリア結果
+FROM 経験イベント AS k
+LEFT JOIN (
+    SELECT コード値, コード名称
+    FROM コード
+    WHERE コード種別 = '4'
+    ) AS c
+ON c.コード値 = k.クリア結果
+UNION
+SELECT k.イベント番号, k.クリア区分, CONCAT(k.クリア結果, ':', c.コード名称) AS クリア結果
+FROM 経験イベント AS k
+RIGHT JOIN (
+    SELECT コード値, コード名称
+    FROM コード
+    WHERE コード種別 = '4'
+    ) AS c
+ON c.コード値 = k.クリア結果
+
+
 -- 68
+
+SELECT e1.イベント番号, e1.イベント名称, e1.前提イベント番号, e2.イベント名称
+FROM イベント AS e1
+JOIN イベント AS e2
+ON e1.前提イベント番号 = e2.イベント番号
+WHERE e1.前提イベント番号 IS NOT NULL
+
+
+
 -- 69
+
+SELECT e1.イベント番号, e1.イベント名称, e1.前提イベント番号, e2.イベント名称, e1.後続イベント番号, e3.イベント名称
+FROM イベント AS e1
+LEFT JOIN イベント AS e2
+ON e1.前提イベント番号 = e2.イベント番号
+LEFT JOIN イベント AS e3
+ON e1.後続イベント番号 = e3.イベント番号
+WHERE e1.前提イベント番号 IS NOT NULL
+OR e1.後続イベント番号 IS NOT NULL 
+
 -- 70
+
+SELECT e.イベント番号, e.イベント名称, z.前提イベント数
+FROM イベント AS e
+JOIN (
+    SELECT 前提イベント番号, COUNT(前提イベント番号) AS 前提イベント数
+    FROM イベント
+    WHERE 前提イベント番号 IS NOT NULL
+    GROUP BY 前提イベント番号
+) AS z
+ON e.イベント番号 = z.前提イベント番号
+ORDER BY e.イベント番号

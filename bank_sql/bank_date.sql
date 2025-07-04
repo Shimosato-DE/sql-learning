@@ -1,6 +1,7 @@
+-- Active: 1751535411249@@127.0.0.1@3306@bank
 --accountsテーブル
-INSERT INTO accounts
-(`account_id`, `name`, `type`, `balance`, `update_date`)
+INSERT INTO 口座
+(`口座番号`, `名義`, `種別`, `残高`, `更新日`)
 VALUES
 ('0037651', 'キタムラ　ユウコ', 1, 1341107, '2024-01-03'),
 ('0100807', 'アキタ　サトル', 3, 10000, '2022-11-30'),
@@ -34,8 +35,8 @@ VALUES
 ('3104451', 'ナカジョウ　ヨシヒコ', 2, 8136406, '2024-03-13');
 
 --廃止済み口座
-INSERT INTO abolished_accounts
-(`account_id`,`name`,`type`,`blance_at_cancellation`,`cancellation_date`)
+INSERT INTO `廃止口座`
+(`口座番号`,`名義`,`種別`,`解約時残高`,`解約日`)
 VALUES
 ('0051432', 'オダ　シンタロウ', 1, 41310, '2023-12-24'),
 ('0097310', 'サイトウ　モモコ', 1, 130040, '2022-06-25'),
@@ -43,13 +44,13 @@ VALUES
 ('1017100', 'ソネ　タツヤ', 1, 0, '2022-11-08');
 
 --取引
-INSERT INTO `index` (
-    `transaction_id`,
-    `transaction_reason_id`,
-    `transaction_date`,
-    `account_id`,
-    `deposit_amount`,
-    `withdrawal_amount`
+INSERT INTO `取引` (
+    `取引番号`,
+    `取引事由ID`,
+    `日付`,
+    `口座番号`,
+    `入金額`,
+    `出金額`
 )
 VALUES
 (1, 9, '2022-01-05', 0051432, NULL, 41310),
@@ -83,10 +84,7 @@ VALUES
 (29, 1, '2024-03-23', 2750902, 50000, NULL);
 
 --取引事由テーブル
-INSERT INTO transaction_reasons (
-    `transaction_reason_id`,
-    `transaction_reason_name`
-)
+INSERT INTO 取引事由 (`取引事由ID`, `取引事由名`)
 VALUES
 (1, '預入'),
 (2, '引出'),

@@ -381,5 +381,97 @@ SELECT A.数量合計 AS 割引による販売数, TRUNC(A.割引金額)
 
 --60
 
+INSERT INTO 
+
+--61
+
+SELECT t.注文番号, t.注文枝番, t.商品コード, s.商品名, t.数量
+FROM 注文 AS t
+JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE 注文番号 = '202401130115'
+
+--62
+
+SELECT t.注文日, t.注文番号, t.注文枝番, t.数量, h.単価 * t.数量 AS 注文金額
+FROM 注文 AS t
+JOIN 廃盤商品 AS h
+ON t.商品コード = h.商品コード
+WHERE h.商品コード = 'A0009'
+AND t.注文日 > h.廃盤日
+
+--63
+
+SELECT s.商品コード, s.商品名, s.単価, t.注文日, t.注文番号, t.数量, s.単価 * t.数量 AS 売上金額
+FROM 商品 AS s
+JOIN 注文 AS t
+ON s.商品コード = t.商品コード
+ORDER BY 4 ASC
+
+--64
+
+SELECT t.商品コード , s.商品名
+FROM 注文 AS t
+JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE t.注文日 >= '2022-08-01' AND 注文日 < '2022-09-01' 
+
+--65
+
+SELECT t.商品コード , COALESCE(s.商品名, '廃盤済み')
+FROM 注文 AS t
+LEFT JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE t.注文日 >= '2022-08-01' AND 注文日 < '2022-09-01'
+
+--66
+
+SELECT t.注文日, CONCAT(s.商品コード, ':' , s.商品名) AS 商品, COALESCE(t.数量, 0)
+FROM 注文 AS t
+RIGHT JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+WHERE 商品区分 = '3'
+
+--67
+
+SELECT t.注文日, CONCAT(s.商品コード, ':' , s.商品名) AS 商品, COALESCE(t.数量, 0)
+FROM 注文 AS t
+RIGHT JOIN (商品 AS s
+ON t.商品コード = s.商品コード
+WHERE 商品区分 = '3'
+UNION
+SELECT 商品コード, '廃盤済み', AS 商品名, 商品区分
+FROM 廃盤商品
 
 
+--68
+
+SELECT t.注文日, t.注文番号, t.注文枝番, t.商品コード, 
+COALESCE(s.商品名, h.商品名), COALESCE(s.単価, h.単価), t.数量, COALESCE(s.単価, h.単価) * t.数量 - t.クーポン割引料 AS 注文金額 
+FROM 注文 AS t
+JOIN 商品 AS s
+ON t.商品コード = s.商品コード
+LEFT JOIN 廃盤商品 AS h
+ON s.商品コード = h.商品コード
+WHERE t.注文番号 = '202304030010'
+
+--69
+
+SELECT s.商品コード, s.商品名, s.単価, COALESCE(t.数量, 0) AS 売上個数, s.単価 * COALESCE(t.数量 , 0) AS 総売上
+FROM 商品 AS s
+LEFT JOIN(
+    SELECT 商品コード, SUM(数量) AS 数量
+    FROM 注文
+    WHERE 商品コード LIKE 'B%'
+    GROUP BY 商品コード
+)  AS t
+ON s.商品コード = t.商品コード
+WHERE 商品コード LIKE 'B%'
+ORDER BY s.商品コード
+
+
+--70
+
+
+
+SELECT S1.商品コード

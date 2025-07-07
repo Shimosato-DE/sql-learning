@@ -472,6 +472,7 @@ ORDER BY s.商品コード
 
 --70
 
-
-
-SELECT S1.商品コード
+SELECT s1.商品コード, s1.商品名, s2.商品コード AS 関連商品コード, s2.商品名 AS 関連商品名
+FROM 商品 AS s1
+JOIN 商品 AS s2
+ON s1.商品コード = s2.商品コード

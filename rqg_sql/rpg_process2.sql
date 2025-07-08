@@ -325,3 +325,171 @@ SELECT SUBSTRING(職業コード, 1, 1), MAX(HP), MIN(HP), AVG(HP), MAX(MP), MIN
 FROM パーティ
 GROUP BY SUBSTRING(職業コード, 1, 1)
 ORDER BY SUBSTRING(職業コード, 1, 1)
+
+
+--51
+SELECT SUBSTRING(id, 1 , 1), AVG(HP), AVG(MP)
+FROM パーティ
+GROUP BY SUBSTRING(id, 1 , 1)
+HAVING AVG(HP) > 100
+
+--52
+SELECT 
+CASE 
+    WHEN SUM(HP) < 100 THEN "1枚"
+    WHEN SUM(HP) < 150 THEN "2枚"
+    WHEN SUM(HP) < 200 THEN "3枚"
+    WHEN SUM(HP) >= 200 THEN "5枚"
+END AS 力の扉
+FROM パーティ
+
+--53
+SELECT 名称, HP, 
+ROUND(HP / (SELECT SUM(`HP`) FROM パーティ)* 100, 1) AS パーティでの割合
+FROM パーティ
+WHERE 職業コード = '01'
+
+--54
+UPDATE パーティ
+SET `MP` = MP + (
+    SELECT ROUND(SUM(MP) * 0.1)
+    FROM パーティ
+    WHERE 職業コード <> '20'
+)
+WHERE 職業コード = '20'
+
+--55
+SELECT イベント番号, クリア結果
+FROM 経験イベント
+WHERE クリア区分 = '1'
+AND イベント番号 IN(
+    SELECT イベント番号
+    FROM イベント
+    WHERE タイプ IN('1', '3'))
+
+--56
+SELECT 名称, MP
+FROM パーティ
+WHERE `MP` = (
+    SELECT MAX(`MP`)
+    FROM パーティ
+)
+
+--57
+SELECT イベント番号, イベント名称
+FROM イベント
+WHERE イベント番号 NOT IN(
+    SELECT イベント番号
+    FROM 経験イベント
+)
+ORDER BY イベント番号
+
+--58
+SELECT COUNT(*)
+FROM イベント
+WHERE イベント番号 NOT IN(
+    SELECT イベント番号
+    FROM 経験イベント
+)
+
+SELECT COUNT(*)
+FROM (
+    SELECT イベント番号
+    FROM イベント
+    EXCEPT
+    SELECT イベント番号
+    FROM 経験イベント
+)
+
+--59
+SELECT イベント番号, イベント名称
+FROM イベント
+WHERE イベント番号 < (
+    
+    SELECT イベント番号
+    FROM 経験イベント
+    WHERE ルート番号 = 5
+)
+
+--60
+SELECT イベント番号, イベント名称, 前提イベント番号
+FROM イベント
+WHERE 前提イベント番号 = ANY(
+    SELECT イベント番号
+    FROM 経験イベント
+    WHERE クリア区分 = '1'
+)
+
+--61
+--62
+SELECT k.ルート番号, k.イベント番号, e.イベント名称, k.クリア結果
+FROM 経験イベント AS k
+JOIN イベント AS e
+ON k.イベント番号 = e.イベント番号
+ORDER BY 1 ASC
+
+--63
+SELECT e.イベント番号, e.イベント名称, k.クリア区分
+FROM イベント AS e
+JOIN 経験イベント AS k
+ON e.イベント番号 = k.イベント番号
+WHERE e.タイプ = '1'
+ORDER BY イベント番号
+
+--64
+SELECT e.イベント番号, e.イベント名称, COALESCE(k.クリア区分, '未クリア')
+FROM イベント AS e
+LEFT JOIN 経験イベント AS k
+ON e.イベント番号 = k.イベント番号
+WHERE e.タイプ = '1'
+ORDER BY イベント番号
+
+--65
+SELECT id, 名称, S.コード名称 as 職業, J.コード名称 as 状態
+FROM パーティ AS p
+JOIN (SELECT コード値, コード名称 FROM コード WHERE コード種別 = '1') AS S
+ON p.職業コード = S.コード値
+JOIN (SELECT コード値, コード名称 FROM コード WHERE コード種別 = '2') AS J
+ON p.状態コード = J.コード値
+ORDER BY id
+
+--66
+SELECT p.id, COALESCE(p.名称, '仲間になっていない'), s.コード名称 AS 職業
+FROM パーティ AS p
+RIGHT JOIN (SELECT コード値, コード名称 FROM コード WHERE コード種別 = '1') AS s
+ON p.職業コード = s.コード値
+
+--67
+SELECT CONCAT(コード値, ':', コード名称), イベント番号, クリア区分, クリア結果
+FROM 経験イベント AS k
+LEFT JOIN (SELECT コード値, コード名称 FROM コード WHERE コード種別 = '4') AS c
+ON k.クリア結果 = c.コード値
+UNION
+SELECT CONCAT(コード値, ':', コード名称), イベント番号, クリア区分, クリア結果
+FROM 経験イベント AS k
+RIGHT JOIN (SELECT コード値, コード名称 FROM コード WHERE コード種別 = '4') AS c
+ON k.クリア結果 = c.コード値
+
+--68
+SELECT e1.イベント番号, e1.イベント名称, e1.前提イベント番号, e2.イベント名称
+FROM イベント AS e1
+JOIN イベント AS e2
+ON e1.イベント番号 = e2.イベント番号
+WHERE e1.前提イベント番号 IS NOT NULL
+
+--69
+SELECT e1.イベント番号, e1.イベント名称, e1.前提イベント番号, e2.イベント名称, e1.後続イベント番号, e3.イベント名称
+FROM イベント AS e1
+LEFT JOIN イベント AS e2
+ON e1.イベント番号 = e2.イベント番号
+LEFT JOIN イベント AS e3
+ON e1.イベント番号 = e3.イベント番号
+WHERE e1.前提イベント番号 IS NOT NULL
+OR e1.後続イベント番号 IS NOT NULL
+
+
+--70
+SELECT イベント番号, イベント名称, 前提イベント数
+FROM イベント AS e
+JOIN (SELECT 前提イベント番号, COUNT(前提イベント番号) AS 前提イベント数 FROM イベント WHERE 前提イベント番号 IS NOT NULL GROUP BY 前提イベント番号) AS z
+ON e.イベント番号 = z.前提イベント番号 ORDER BY e.イベント番号

@@ -1,4 +1,4 @@
--- Active: 1751535411249@@127.0.0.1@3306@bank
+
 --口座テーブル
 CREATE TABLE IF NOT EXISTS `口座` (
     `口座番号` CHAR(7) PRIMARY KEY,

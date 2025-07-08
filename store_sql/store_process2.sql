@@ -1,3 +1,4 @@
+-- Active: 1751946101721@@127.0.0.1@3306@store
 
 --1
 
@@ -476,3 +477,77 @@ SELECT s1.商品コード, s1.商品名, s2.商品コード AS 関連商品コ�
 FROM 商品 AS s1
 JOIN 商品 AS s2
 ON s1.商品コード = s2.商品コード
+
+
+
+
+
+
+
+
+--副問合せ
+--55
+
+SELECT 商品コード, 商品名, 単価, (
+    SELECT SUM(数量)
+    FROM 注文
+    WHERE 商品コード = 'S0604'
+)
+FROM 商品
+WHERE 商品コード = 'S0604'
+
+
+--56
+
+UPDATE 注文 SET 商品コード = (
+    SELECT 商品コード
+    FROM 商品
+    WHERE 商品区分 = '2'
+    AND 商品名 LIKE '%ブーツ%'
+    AND 商品名 LIKE '%雨%'
+    AND 商品名 LIKE '%安心%'
+)
+WHERE 注文日 = '2024-03-15'
+AND 注文番号 = '202403150014'
+AND 注文枝番 = '1'
+
+
+--57
+
+SELECT 商品コード, 商品名, (
+    SELECT 日付
+    FROM 注文
+    WHERE 商品名 LIKE '%あったか%' 
+)
+FROM 商品
+WHERE 商品名 LIKE '%あったか%'
+
+SELECT 注文日, 商品コード
+FROM 注文
+WHERE 商品コード IN(
+    SELECT 商品コード
+    FROM 商品
+    WHERE 商品名 LIKE '%あったか%'
+)
+ORDER BY 注文日
+
+
+--58
+
+
+SELECT 商品コード, SUM(数量) AS 数量
+FROM 注文
+GROUP BY 商品コード
+HAVING 数量 > ALL(
+    SELECT AVG(数量)
+    FROM 注文
+    GROUP BY 商品コード 
+    )
+
+
+
+--59
+
+
+
+--60

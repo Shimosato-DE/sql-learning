@@ -1,3 +1,4 @@
+-- Active: 1751946101721@@127.0.0.1@3306@bank
 
 --accountsテーブル
 INSERT INTO 口座

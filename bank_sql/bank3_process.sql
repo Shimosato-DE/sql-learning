@@ -316,5 +316,219 @@ WHERE 更新日 >= '2024-01-01'
 
 
 --48
-SELECT 更新日
+SELECT COALESCE(更新日, '設定なし')
 FROM 口座
+
+
+--49
+SELECT SUM(残高), MAX(残高), MIN(残高), AVG(残高), COUNT(*)
+FROM 口座
+
+--50
+SELECT COUNT(*)
+FROM 口座
+WHERE 種別 != '1'
+AND 残高 >= 1000000
+AND 更新日 < '2024-01-01'
+
+--51
+SELECT COUNT(*)
+FROM 口座
+WHERE 更新日 IS NULL
+
+--52
+SELECT MAX(名義), MIN(名義)
+FROM 口座
+
+--53
+SELECT MAX(更新日), MIN(更新日)
+FROM 口座
+
+--54
+SELECT 種別, SUM(残高), MAX(残高), MIN(残高), AVG(残高), COUNT(*)
+FROM 口座
+GROUP BY 種別
+
+--55
+SELECT SUBSTRING(口座番号, 7, 1), COUNT(*)
+FROM 口座
+GROUP BY SUBSTRING(口座番号, 7, 1)
+ORDER BY 1 ASC
+
+--56
+SELECT COALESCE(更新日, 'XXXX年'), SUM(残高), MAX(残高), MIN(残高), AVG(残高), COUNT(*)
+FROM 口座
+GROUP BY 更新日
+
+--57
+SELECT SUM(残高), COUNT(*)
+FROM 口座
+GROUP BY 種別
+HAVING SUM(残高) >= 3000000
+
+--58
+SELECT SUBSTRING(名義, 1, 1), COUNT(名義), AVG(CHARACTER_LENGTH(REPLACE(名義, "　", "")))
+FROM 口座
+GROUP BY SUBSTRING(名義, 1, 1)
+HAVING COUNT(名義) >= 10
+OR AVG(CHARACTER_LENGTH(REPLACE(名義, "　", ""))) > 5
+
+--59
+UPDATE 口座 SET 残高 = 残高 + (
+    SELECT COALESCE(SUM(入金額), 0) - COALESCE(SUM(出金額), 0)
+    FROM 取引
+    WHERE 口座番号 = '0351333'
+    AND 日付 = '2024-01-11' 
+)
+WHERE 口座番号 = '0351333'
+
+--60
+SELECT 残高, (
+    SELECT SUM(入金額)
+    FROM 取引
+    WHERE 口座番号 = '1115600'
+    AND 日付 = '2023-12-28'
+) AS 入金額合計,(
+    SELECT SUM(出金額)
+    FROM 取引
+    WHERE 口座番号 = '1115600'
+    AND 日付 = '2023-12-28'
+) AS 出金額合計
+
+FROM 口座
+WHERE 口座番号 = '1115600'
+
+--61
+SELECT 口座番号, 名義, 残高
+FROM 口座
+WHERE 口座番号 IN(
+    SELECT 口座番号
+    FROM 取引
+    WHERE 入金額 >= 1000000
+)
+
+--62
+SELECT *
+FROM 口座
+WHERE 更新日 > ALL(
+    SELECT 日付
+    FROM 取引
+    )
+
+--63
+SELECT 
+
+--64
+
+INSERT INTO 廃止口座
+SELECT *
+FROM 口座
+WHERE 口座番号 = '2761055'
+
+DELETE FROM 口座
+WHERE 口座番号 = '2761055'
+
+--65
+SELECT t.口座番号, t.日付, r.取引事由名, COALESCE(t.入金額, t.出金額) AS 取引金額
+FROM 取引 AS t
+JOIN 取引事由 AS r
+ON t.`取引事由ID` = r.`取引事由ID`
+WHERE 口座番号 IN('0311240', '1234161', '2750902')
+
+--66
+SELECT k.口座番号, k.名義, k.残高, t.日付, t.入金額, t.出金額
+FROM 口座 AS k
+JOIN 取引 AS t
+ON k.口座番号 = t.口座番号
+WHERE k.口座番号 = '0887132'
+ORDER BY t.日付 ASC
+
+--67
+
+SELECT t.口座番号, k.名義, k.名義
+FROM 取引 AS t 
+JOIN 口座 AS k
+ON t.口座番号 = k.口座番号
+WHERE t.日付 = '2022-03-01'
+
+--68
+
+SELECT t.口座番号, COALESCE(k.名義, '解約済み'), COALESCE(k.残高, 0)
+FROM 取引 AS t 
+LEFT JOIN 口座 AS k
+ON t.口座番号 = k.口座番号
+WHERE t.日付 = '2022-03-01'
+
+
+--69
+
+SELECT t.取引番号, CONCAT(t.`取引事由ID`, ':', r.取引事由名), t.日付, t.口座番号, t.入金額, t.出金額
+FROM 取引 AS t
+JOIN 取引事由 AS r
+ON t.`取引事由ID` = r.`取引事由ID`
+
+
+--70
+
+SELECT DISTINCT t.`取引事由ID`, r.取引事由名
+FROM 取引 AS t
+LEFT JOIN 取引事由 AS r
+ON t.`取引事由ID` = r.`取引事由ID`
+UNION
+SELECT DISTINCT t.`取引事由ID`, r.取引事由名
+FROM 取引 AS t
+RIGHT JOIN 取引事由 AS r
+ON t.`取引事由ID` = r.`取引事由ID`
+
+--71
+
+SELECT t.日付, r.取引事由名, t.入金額, t.出金額
+FROM 口座 AS k
+JOIN 取引 AS t
+ON k.口座番号 = t.口座番号
+JOIN 取引事由 AS r
+ON t.`取引事由ID` = r.`取引事由ID`
+WHERE k.口座番号 = '0887132'
+ORDER BY t.日付 ASC
+
+--72
+SELECT k.口座番号, k.名義, k.残高, t.日付, t.取引事由ID, t.入金額, t.出金額 
+FROM 口座 AS k
+JOIN 取引 AS t
+ON k.口座番号 = t.口座番号
+WHERE k.残高 >= 5000000
+AND t.日付 >= '2024-01-01'
+AND t.入金額 > 1000000 OR t.出金額 > 1000000
+
+--73
+
+SELECT k.口座番号, k.名義, k.残高, t.日付, t.取引事由ID, t.入金額, t.出金額 
+FROM 口座 AS k
+JOIN (
+    SELECT 口座番号, 日付, 取引事由ID, 入金額, 出金額 
+    FROM 取引
+    WHERE 日付 >= '2024-01-01'
+    AND (入金額 > 1000000 OR 出金額 > 1000000)
+) AS t
+ON k.口座番号 = t.口座番号
+WHERE k.残高 >= 5000000
+
+--74
+SELECT k.口座番号, t.日付, t.回数, k.名義
+FROM 口座 AS k
+JOIN (
+    SELECT 口座番号, 日付, COUNT(*) AS 回数
+    FROM 取引
+    GROUP BY 口座番号,日付
+    HAVING COUNT(*) >= 3 
+    ) AS t
+ON k.口座番号 = t.口座番号
+
+--75
+
+SELECT DISTINCT k1.名義, k1.口座番号, k1.種別, k1.残高, k1.更新日
+FROM 口座 AS k1
+JOIN 口座 AS k2
+ON k1.名義 = k2.名義
+WHERE k1.口座番号 <> k2.口座番号
+ORDER BY k1.名義, k1.口座番号
